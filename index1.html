@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSDBS | Nepal Basic Education v16</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        
+        .a4-page { 
+            width: 210mm; height: 296mm; padding: 10mm; 
+            background: white; margin: 20px auto; border-top: 14px solid #7f1d1d;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2); color: #1e293b; 
+            position: relative; overflow: hidden; 
+        }
+
+        table { table-layout: fixed; width: 100%; border-collapse: collapse; }
+        td, th { overflow: hidden; text-overflow: ellipsis; word-wrap: break-word; border: 1px solid #0f172a; }
+
+        @media print { 
+            .no-print, .sidebar, button { display: none !important; } 
+            body, html { background: white !important; width: 210mm; height: 297mm; }
+            .a4-page { box-shadow: none !important; margin: 0 !important; width: 210mm !important; height: 297mm !important; page-break-after: always !important; }
+            @page { size: A4; margin: 0; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 flex flex-col md:flex-row min-h-screen">
+
+    <div class="w-full md:w-80 bg-white dark:bg-slate-900 p-5 no-print border-r border-slate-200 dark:border-slate-800 h-auto md:h-screen md:sticky md:top-0">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-red-600 font-black uppercase text-[10px]">SSDBS ADMIN</h2>
+            <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-slate-100 dark:bg-slate-800">☀️</button>
+        </div>
+        
+        <input type="text" id="student-search" oninput="renderStudentList()" placeholder="Search Student..." 
+               class="w-full bg-slate-50 dark:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs mb-4">
+        
+        <div id="student-list" class="flex-1 space-y-1 overflow-y-auto mb-4 max-h-48 md:max-h-[60vh]"></div>
+        
+        <div class="space-y-2 pt-4 border-t dark:border-slate-800">
+            <button onclick="createNewStudent()" class="w-full bg-red-700 text-white font-bold py-2 rounded text-xs uppercase shadow-md">+ New Student</button>
+            <button onclick="printAllStudents()" class="w-full bg-blue-700 text-white font-bold py-2 rounded text-xs uppercase">🖨️ Print All Class</button>
+            <button onclick="exportClassToExcel()" class="w-full bg-slate-700 text-white text-[10px] font-bold py-2 rounded uppercase">📊 Export CSV</button>
+        </div>
+    </div>
+
+    <div id="main-container" class="flex-1 overflow-y-auto pb-10">
+        <div class="a4-page" id="marksheet-view">
+            
+            <div class="text-center border-b-2 border-double border-slate-300 pb-3 mb-4">
+                <h1 class="text-3xl font-extrabold text-red-900 uppercase leading-none">Shree Seti Devi Basic School</h1>
+                <p class="text-slate-500 font-bold text-[9px] uppercase mt-1">Thakle, Ramechhap-3, Nepal | Estd: 2043</p>
+                <div class="mt-2 inline-block border-2 border-slate-900 px-6 py-1 text-xs font-black uppercase bg-slate-50 italic">Grade Sheet</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4 text-[12px]">
+                <div class="space-y-1">
+                    <p><strong>NAME:</strong> <span id="display-name" contenteditable="true" oninput="syncName(this)" class="border-b border-slate-300 min-w-[150px] inline-block font-bold">--</span></p>
+                    <p><strong>ROLL:</strong> <span id="display-roll" contenteditable="true" class="border-b border-slate-300 min-w-[50px] inline-block font-bold">--</span></p>
+                    <p><strong>GRADE:</strong> <span id="display-grade" contenteditable="true" class="border-b border-slate-300 min-w-[80px] inline-block font-bold uppercase">--</span></p>
+                </div>
+                <div class="text-right space-y-1">
+                    <p><strong>YEAR:</strong> <span id="display-year" contenteditable="true" class="border-b border-slate-300 font-bold">2082 B.S.</span></p>
+                    <p><strong>ATTENDANCE:</strong> <span id="display-attendance" contenteditable="true" class="border-b border-slate-300 font-bold">--</span></p>
+                    <p><strong>DATE:</strong> <span id="display-date" contenteditable="true" class="border-b border-slate-300 font-bold">2082-12-25</span></p>
+                </div>
+            </div>
+
+            <table class="text-[11px] mb-4">
+                <thead>
+                    <tr class="bg-slate-900 text-white uppercase text-[8px]">
+                        <th class="p-2 text-left" style="width: 40%;">Subjects</th>
+                        <th class="p-2 text-center">FM</th>
+                        <th class="p-2 text-center">PM</th>
+                        <th class="p-2 text-center">OM</th>
+                        <th class="p-2 text-center">Grade</th>
+                        <th class="no-print w-8 border-none"></th>
+                    </tr>
+                </thead>
+                <tbody id="marks-body"></tbody>
+                <tfoot class="bg-slate-50 font-black">
+                    <tr>
+                        <td class="p-2 text-right text-[10px]" colspan="3">TOTAL PERCENTAGE:</td>
+                        <td id="final-percent" class="p-2 text-center text-red-900 text-base border" colspan="2">0%</td>
+                        <td class="no-print border-none"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="col-span-2 border p-2 bg-slate-50 rounded text-[10px]">
+                    <span class="font-bold text-slate-400 uppercase block text-[7px]">Remarks:</span>
+                    <p id="display-remarks" contenteditable="true" class="italic leading-tight">--</p>
+                </div>
+                <div class="border-2 border-slate-900 p-2 text-center bg-white flex flex-col justify-center">
+                    <span class="text-[7px] font-bold text-slate-400 block uppercase">GPA</span>
+                    <div id="final-cgpa" class="text-lg font-black text-red-900 leading-none">0.00</div>
+                    <div id="final-grade-letter" class="text-[9px] font-bold text-slate-600 uppercase">-</div>
+                </div>
+                <div class="border-2 border-slate-900 p-2 text-center bg-white flex flex-col justify-center">
+                    <span class="text-[7px] font-bold text-slate-400 block uppercase">Result</span>
+                    <div id="status-badge" class="text-[10px] font-black uppercase leading-none">--</div>
+                </div>
+            </div>
+
+            <div class="mb-6 border-t border-slate-200 pt-3 grid grid-cols-2 gap-2 text-[8px] font-semibold text-slate-600">
+                <div><span class="text-red-800">FM:</span> Full Marks | <span class="text-red-800">PM:</span> Pass Marks | <span class="text-red-800">OM:</span> Obtained Marks</div>
+                <div class="text-right">A+: 90-100 | A: 80-89 | B+: 70-79 | B: 60-69 | C+: 50-59 | E: < 33</div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-8 mt-10 text-center text-[9px] font-bold text-slate-400 uppercase">
+                <div class="border-t border-slate-300 pt-1">Class Teacher</div>
+                <div class="border-t border-slate-300 pt-1">Guardian</div>
+                <div class="border-t-2 border-slate-900 pt-1 text-slate-900">Headmaster / Stamp</div>
+            </div>
+
+            <div class="mt-8 flex justify-between no-print pt-4 border-t border-dashed border-slate-200">
+                <button onclick="addRow()" class="text-red-700 font-bold text-[10px] uppercase hover:underline">+ Add Subject</button>
+                <div class="flex gap-2">
+                    <button onclick="saveCurrentStudent()" class="bg-emerald-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase">💾 Save</button>
+                    <button onclick="window.print()" class="bg-red-900 text-white px-4 py-1 rounded text-[10px] font-bold uppercase">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let students = {}; let currentId = null;
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
+
+        const nepalSubjects = [
+            { name: "Nepali", full: 100, pass: 35 },
+            { name: "English", full: 100, pass: 35 },
+            { name: "Mathematics", full: 100, pass: 35 },
+            { name: "Science & Technology", full: 100, pass: 35 },
+            { name: "Social Studies & Creative Art", full: 100, pass: 35 },
+            { name: "Health, Physical & Moral Ed.", full: 100, pass: 35 },
+            { name: "Occupational, Business Ed.", full: 100, pass: 35 },
+            { name: "Local Subject / Mero Serophero", full: 100, pass: 35 }
+        ];
+
+        window.onload = () => {
+            const saved = localStorage.getItem('ssdbs_v16_master');
+            if (saved) { 
+                students = JSON.parse(saved); renderStudentList(); 
+                if(Object.keys(students)[0]) loadStudent(Object.keys(students)[0]); 
+            } else { createNewStudent(); }
+        };
+
+        function createNewStudent() {
+            const id = 's_' + Date.now();
+            students[id] = {
+                name: "New Student", roll: "1", grade: "Class 5", year: "2082 B.S.", attendance: "180/200", 
+                date: "2082-12-25", remarks: "Great work.",
+                subjects: nepalSubjects.map(s => ({...s, mark: 0}))
+            };
+            renderStudentList(); loadStudent(id);
+        }
+
+        function renderStudentList() {
+            const container = document.getElementById('student-list');
+            const query = document.getElementById('student-search').value.toLowerCase();
+            container.innerHTML = '';
+            Object.keys(students).forEach(id => {
+                if(students[id].name.toLowerCase().includes(query)) {
+                    const item = document.createElement('div');
+                    item.className = `p-2 rounded cursor-pointer transition flex justify-between items-center text-[10px] ${id === currentId ? 'bg-red-900 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400'}`;
+                    item.innerHTML = `<span onclick="loadStudent('${id}')" class="font-bold uppercase truncate">${students[id].name}</span>
+                                     <button onclick="deleteStudent('${id}')" class="text-red-500 font-bold px-2">✕</button>`;
+                    container.appendChild(item);
+                }
+            });
+        }
+
+        function loadStudent(id) {
+            currentId = id; const s = students[id];
+            document.getElementById('display-name').innerText = s.name;
+            document.getElementById('display-roll').innerText = s.roll;
+            document.getElementById('display-grade').innerText = s.grade;
+            document.getElementById('display-year').innerText = s.year;
+            document.getElementById('display-attendance').innerText = s.attendance;
+            document.getElementById('display-date').innerText = s.date;
+            document.getElementById('display-remarks').innerText = s.remarks;
+            const tbody = document.getElementById('marks-body'); tbody.innerHTML = '';
+            s.subjects.forEach(sub => addRow(sub.name, sub.mark, sub.full, sub.pass));
+            calculate(); renderStudentList();
+        }
+
+        function addRow(name = "Subject", mark = 0, full = 100, pass = 35) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td contenteditable="true" class="p-1 font-bold sub-name">${name}</td>
+                <td contenteditable="true" class="p-1 text-center full-mark text-slate-400">${full}</td>
+                <td contenteditable="true" class="p-1 text-center pass-mark text-slate-400 italic">${pass}</td>
+                <td contenteditable="true" class="p-1 text-center font-bold text-red-800 mark-input">${mark}</td>
+                <td class="p-1 text-center font-bold grade-output">-</td>
+                <td class="no-print p-1 text-center border-none"><button onclick="this.parentElement.parentElement.remove(); calculate();" class="text-slate-300 hover:text-red-500 font-bold">✕</button></td>`;
+            document.getElementById('marks-body').appendChild(tr);
+            tr.querySelectorAll('[contenteditable]').forEach(el => el.addEventListener('input', calculate));
+            calculate();
+        }
+
+        function calculate() {
+            let ob = 0, mx = 0, fail = false;
+            document.querySelectorAll('#marks-body tr').forEach(row => {
+                let m = parseFloat(row.querySelector('.mark-input').innerText) || 0;
+                let f = parseFloat(row.querySelector('.full-mark').innerText) || 100;
+                let pl = parseFloat(row.querySelector('.pass-mark').innerText) || 35;
+                ob += m; mx += f;
+                let p = (m/f)*100;
+                let g = (m < pl) ? 'E' : (p >= 90 ? 'A+' : p >= 80 ? 'A' : p >= 70 ? 'B+' : p >= 60 ? 'B' : p >= 50 ? 'C+' : p >= 40 ? 'C' : p >= 33 ? 'D' : 'E');
+                if(m < pl) fail = true;
+                row.querySelector('.grade-output').innerText = g;
+            });
+            let fp = mx > 0 ? (ob/mx)*100 : 0;
+            document.getElementById('final-percent').innerText = fp.toFixed(1) + "% (" + ob + "/" + mx + ")";
+            document.getElementById('final-cgpa').innerText = ((fp/100)*4).toFixed(2);
+            let fg = fp >= 90 ? 'A+' : fp >= 80 ? 'A' : fp >= 70 ? 'B+' : fp >= 60 ? 'B' : fp >= 50 ? 'C+' : fp >= 40 ? 'C' : fp >= 33 ? 'D' : 'E';
+            document.getElementById('final-grade-letter').innerText = "Grade: " + fg;
+            const b = document.getElementById('status-badge');
+            b.innerText = fail ? "FAIL" : "PASS"; b.className = `text-[10px] font-black mt-1 ${fail ? 'text-red-700' : 'text-green-700'}`;
+        }
+
+        function saveCurrentStudent() {
+            if(!currentId) return;
+            const subs = [];
+            document.querySelectorAll('#marks-body tr').forEach(row => {
+                subs.push({ name: row.querySelector('.sub-name').innerText, mark: row.querySelector('.mark-input').innerText, full: row.querySelector('.full-mark').innerText, pass: row.querySelector('.pass-mark').innerText });
+            });
+            students[currentId] = {
+                name: document.getElementById('display-name').innerText, roll: document.getElementById('display-roll').innerText, 
+                grade: document.getElementById('display-grade').innerText, year: document.getElementById('display-year').innerText, 
+                attendance: document.getElementById('display-attendance').innerText, date: document.getElementById('display-date').innerText, 
+                remarks: document.getElementById('display-remarks').innerText, subjects: subs
+            };
+            localStorage.setItem('ssdbs_v16_master', JSON.stringify(students)); alert("Successfully Saved!");
+        }
+
+        function syncName(el) { if(currentId) { students[currentId].name = el.innerText; renderStudentList(); } }
+        function deleteStudent(id) { if(confirm("Delete student?")) { delete students[id]; localStorage.setItem('ssdbs_v16_master', JSON.stringify(students)); location.reload(); } }
+
+        function printAllStudents() {
+            const originalContent = document.body.innerHTML;
+            let printHTML = '';
+            Object.keys(students).forEach(id => {
+                const s = students[id];
+                let ob = 0, mx = 0, fail = false, rows = '';
+                s.subjects.forEach(sub => {
+                    let m = parseFloat(sub.mark)||0, f = parseFloat(sub.full)||100, pl = parseFloat(sub.pass)||35;
+                    ob += m; mx += f;
+                    let p = (m/f)*100;
+                    let g = (m < pl) ? 'E' : (p >= 90 ? 'A+' : p >= 80 ? 'A' : p >= 70 ? 'B+' : p >= 60 ? 'B' : p >= 50 ? 'C+' : p >= 40 ? 'C' : p >= 33 ? 'D' : 'E');
+                    if(m < pl) fail = true;
+                    rows += `<tr><td class="p-1 font-bold border">${sub.name}</td><td class="p-1 text-center border">${sub.full}</td><td class="p-1 text-center border">${sub.pass}</td><td class="p-1 text-center border">${sub.mark}</td><td class="p-1 text-center border">${g}</td></tr>`;
+                });
+                let fp = (ob/mx)*100;
+                printHTML += `
+                <div class="a4-page">
+                    <div class="text-center border-b-2 border-double border-slate-300 pb-2 mb-4">
+                        <h1 class="text-2xl font-extrabold text-red-900 uppercase">Shree Seti Devi Basic School</h1>
+                        <p class="text-[9px] font-bold">Thakle, Ramechhap-3, Nepal</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-4 text-[11px]">
+                        <div><strong>NAME:</strong> ${s.name}<br><strong>ROLL:</strong> ${s.roll}</div>
+                        <div class="text-right"><strong>GRADE:</strong> ${s.grade}<br><strong>DATE:</strong> ${s.date}</div>
+                    </div>
+                    <table class="w-full text-[10px] mb-4">
+                        <tr class="bg-slate-900 text-white uppercase"><th class="border">Subject</th><th class="border">FM</th><th class="border">PM</th><th class="border">OM</th><th class="border">Grade</th></tr>
+                        ${rows}
+                        <tr class="font-bold bg-slate-50"><td colspan="3" class="text-right p-1 border">TOTAL PERCENTAGE:</td><td colspan="2" class="text-center p-1 border">${fp.toFixed(1)}%</td></tr>
+                    </table>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="border p-2 text-[9px]"><strong>Remarks:</strong> ${s.remarks}</div>
+                        <div class="border-2 border-slate-900 text-center p-2 font-bold text-[10px]">
+                            GPA: ${((fp/100)*4).toFixed(2)} | Result: ${fail ? 'FAIL' : 'PASS'}
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-8 mt-20 text-center text-[9px] uppercase font-bold text-slate-300">
+                        <div class="border-t border-slate-400 pt-1">Class Teacher</div>
+                        <div class="border-t border-slate-400 pt-1">Guardian</div>
+                        <div class="border-t-2 border-slate-900 text-slate-900 pt-1">Headmaster</div>
+                    </div>
+                </div>`;
+            });
+            document.body.innerHTML = printHTML;
+            window.print();
+            location.reload();
+        }
+
+        function exportClassToExcel() {
+            let csv = "Roll,Name,Grade,Percentage,GPA,Result\n";
+            Object.values(students).forEach(s => {
+                let ob = 0, mx = 0; s.subjects.forEach(sub => { ob += parseFloat(sub.mark)||0; mx += parseFloat(sub.full)||100; });
+                let p = (ob/mx)*100;
+                csv += `"${s.roll}","${s.name}","${s.grade}","${p.toFixed(1)}%","${((p/100)*4).toFixed(2)}","${p<35?'FAIL':'PASS'}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "SSDBS_Grading_Data.csv"; a.click();
+        }
+    </script>
+</body>
+</html>

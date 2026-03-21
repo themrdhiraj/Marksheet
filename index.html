@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSDBS | Official Marksheet Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .a4-container { width: 210mm; min-height: 297mm; padding: 20mm; margin: 10px auto; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        [contenteditable]:focus { outline: 2px solid #b91c1c; background: #fff7ed; border-radius: 2px; }
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: none; padding: 0; margin: 0; }
+            .a4-container { margin: 0; box-shadow: none; width: 100%; padding: 10mm; }
+            @page { size: A4; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="a4-container border-t-[14px] border-red-800 relative">
+        <div class="text-center border-b-2 border-double border-slate-300 pb-4 mb-6">
+            <h1 class="text-3xl font-extrabold text-red-900 uppercase">Shree Seti Devi Basic School</h1>
+            <p class="text-slate-600 font-bold text-xs tracking-widest mt-1">ESTD: 2043</p>
+            <p class="text-slate-500 text-[10px] uppercase mt-1">Thakle, Ramechhap-3, Ramechhap, Nepal</p>
+            <div class="mt-4 inline-block border-2 border-slate-800 px-8 py-1 text-sm font-black tracking-tighter uppercase">Progress Report Card</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-x-12 gap-y-4 mb-6 text-sm text-slate-800 border-b pb-6">
+            <div class="space-y-2">
+                <p><strong>STUDENT NAME:</strong> <span id="student-name" contenteditable="true" class="border-b border-slate-300 min-w-[200px] inline-block font-semibold uppercase">Student Name</span></p>
+                <p><strong>ROLL NUMBER:</strong> <span id="roll-no" contenteditable="true" class="border-b border-slate-300 min-w-[60px] inline-block font-semibold">01</span></p>
+                <p><strong>GRADE/LEVEL:</strong> <span id="student-grade" contenteditable="true" class="border-b border-slate-300 min-w-[100px] inline-block font-semibold">Basic Level</span></p>
+            </div>
+            <div class="space-y-2 text-right">
+                <p><strong>ACADEMIC YEAR:</strong> <span id="acad-year" contenteditable="true" class="border-b border-slate-300 font-semibold px-1">2082 B.S.</span></p>
+                <p><strong>ATTENDANCE:</strong> <span id="attendance" contenteditable="true" class="border-b border-slate-300 font-semibold px-1">180 / 200</span></p>
+                <p><strong>ISSUE DATE:</strong> <span contenteditable="true" class="border-b border-slate-300 font-semibold px-1">2082-12-25</span></p>
+            </div>
+        </div>
+
+        <table class="w-full border-collapse border-2 border-slate-800 mb-6">
+            <thead>
+                <tr class="bg-slate-800 text-white text-[10px] uppercase tracking-widest">
+                    <th class="border border-slate-700 p-3 text-left">Subjects</th>
+                    <th class="border border-slate-700 p-3 text-center w-28">Full Marks</th>
+                    <th class="border border-slate-700 p-3 text-center w-28">Obtained</th>
+                    <th class="border border-slate-700 p-3 text-center w-20">Grade</th>
+                    <th class="border border-slate-700 p-3 text-center no-print w-8"></th>
+                </tr>
+            </thead>
+            <tbody id="marks-body"></tbody>
+            <tfoot class="bg-slate-100 font-black border-2 border-slate-800">
+                <tr>
+                    <td class="p-3 text-right text-xs" colspan="2">TOTAL OBTAINED / PERCENTAGE</td>
+                    <td id="total-score" class="p-3 text-center text-red-900 text-lg">0</td>
+                    <td id="final-percent" class="p-3 text-center text-red-900 text-lg">0%</td>
+                    <td class="no-print border border-slate-300"></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="grid grid-cols-4 gap-4 mb-12">
+            <div class="col-span-2 border-2 border-slate-200 p-4 rounded bg-slate-50">
+                <h3 class="text-[10px] font-bold uppercase text-slate-500 mb-1">Teacher's Remarks:</h3>
+                <p id="teacher-remarks" contenteditable="true" class="text-sm italic text-slate-700 outline-none leading-tight">Keep up the good work!</p>
+            </div>
+            <div class="border-2 border-slate-800 p-2 text-center">
+                <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">CGPA & Grade</span>
+                <div id="final-cgpa" class="text-xl font-black text-red-900">0.00</div>
+                <div id="final-grade-letter" class="text-sm font-bold text-slate-600 leading-none mt-1">Grade: -</div>
+            </div>
+            <div class="border-2 border-slate-800 p-2 text-center">
+                <span class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Result</span>
+                <div id="status-badge" class="text-xl font-black mt-2">PASS</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-10 mt-24 text-center text-[10px] font-bold text-slate-500 uppercase">
+            <div class="border-t border-slate-300 pt-2">Class Teacher</div>
+            <div class="border-t border-slate-300 pt-2">Guardian's Signature</div>
+            <div class="border-t-2 border-slate-900 pt-2 text-slate-900">Headmaster / Stamp</div>
+        </div>
+
+        <div class="mt-12 flex flex-wrap gap-3 no-print border-t border-dashed pt-6">
+            <button onclick="addRow()" class="bg-slate-700 text-white px-4 py-2 rounded text-xs font-bold hover:bg-slate-900 transition">+ Add Subject</button>
+            <button onclick="saveData()" class="bg-emerald-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-emerald-700 transition">💾 Save Data</button>
+            <button onclick="exportToCSV()" class="bg-blue-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-blue-700 transition">📊 Export Excel</button>
+            <button onclick="window.print()" class="bg-red-800 text-white px-6 py-2 rounded text-xs font-bold hover:bg-red-900 transition shadow-lg ml-auto">Print / PDF</button>
+        </div>
+    </div>
+
+    <script>
+        const tableBody = document.getElementById('marks-body');
+
+        window.onload = () => {
+            const saved = localStorage.getItem('ssdbs_v5_cgpa');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('student-name').innerText = data.name;
+                document.getElementById('roll-no').innerText = data.roll;
+                document.getElementById('student-grade').innerText = data.grade;
+                document.getElementById('attendance').innerText = data.attendance;
+                document.getElementById('acad-year').innerText = data.year;
+                document.getElementById('teacher-remarks').innerText = data.remarks;
+                data.subjects.forEach(s => addRow(s.name, s.mark, s.full));
+            } else {
+                ["Nepali", "English", "Mathematics", "Science", "Social Studies"].forEach(s => addRow(s, 0, 100));
+            }
+        };
+
+        function addRow(name = "New Subject", mark = 0, full = 100) {
+            const tr = document.createElement('tr');
+            tr.className = "text-sm hover:bg-slate-50";
+            tr.innerHTML = `
+                <td contenteditable="true" class="border border-slate-300 p-3 font-semibold text-slate-700 sub-name">${name}</td>
+                <td contenteditable="true" class="border border-slate-300 p-3 text-center text-slate-500 font-mono full-mark">${full}</td>
+                <td contenteditable="true" class="border border-slate-300 p-3 text-center font-bold text-red-800 mark-input">${mark}</td>
+                <td class="border border-slate-300 p-3 text-center font-bold grade-output">-</td>
+                <td class="border border-slate-300 p-3 text-center no-print">
+                    <button onclick="this.parentElement.parentElement.remove(); calculate();" class="text-red-300 hover:text-red-600 font-bold">✕</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+            tr.querySelector('.mark-input').addEventListener('input', calculate);
+            tr.querySelector('.full-mark').addEventListener('input', calculate);
+            calculate();
+        }
+
+        function calculate() {
+            const rows = document.querySelectorAll('#marks-body tr');
+            let totalObtained = 0, totalMax = 0, failed = false;
+
+            rows.forEach(row => {
+                let obtained = parseFloat(row.querySelector('.mark-input').innerText) || 0;
+                let max = parseFloat(row.querySelector('.full-mark').innerText) || 100;
+                totalObtained += obtained; totalMax += max;
+
+                let percent = (obtained / max) * 100;
+                let g = 'F', color = 'text-red-600';
+                
+                if (percent >= 90) { g = 'A+'; color = 'text-emerald-700'; }
+                else if (percent >= 80) { g = 'A'; color = 'text-emerald-600'; }
+                else if (percent >= 70) { g = 'B+'; color = 'text-blue-600'; }
+                else if (percent >= 60) { g = 'B'; color = 'text-blue-500'; }
+                else if (percent >= 40) { g = 'C'; color = 'text-orange-600'; }
+                else if (percent >= 33) { g = 'D'; color = 'text-slate-600'; }
+                else { failed = true; }
+
+                const out = row.querySelector('.grade-output');
+                out.innerText = g; out.className = `border border-slate-300 p-3 text-center font-bold grade-output ${color}`;
+            });
+
+            const finalPercent = totalMax > 0 ? (totalObtained / totalMax) * 100 : 0;
+            document.getElementById('total-score').innerText = totalObtained + " / " + totalMax;
+            document.getElementById('final-percent').innerText = finalPercent.toFixed(1) + '%';
+            
+            // CGPA Logic (4.0 scale)
+            let cgpa = (finalPercent / 100) * 4;
+            document.getElementById('final-cgpa').innerText = cgpa.toFixed(2);
+
+            // Overall Grade Logic
+            let finalGrade = 'F';
+            if (finalPercent >= 90) finalGrade = 'A+';
+            else if (finalPercent >= 80) finalGrade = 'A';
+            else if (finalPercent >= 70) finalGrade = 'B+';
+            else if (finalPercent >= 60) finalGrade = 'B';
+            else if (finalPercent >= 40) finalGrade = 'C';
+            else if (finalPercent >= 33) finalGrade = 'D';
+            document.getElementById('final-grade-letter').innerText = "Grade: " + finalGrade;
+
+            const badge = document.getElementById('status-badge');
+            badge.innerText = (failed || rows.length === 0) ? "FAIL" : "PASS";
+            badge.className = `text-xl font-black mt-2 ${failed ? 'text-red-700' : 'text-green-700'}`;
+        }
+
+        function saveData() {
+            const subs = [];
+            document.querySelectorAll('#marks-body tr').forEach(row => {
+                subs.push({ name: row.querySelector('.sub-name').innerText, mark: row.querySelector('.mark-input').innerText, full: row.querySelector('.full-mark').innerText });
+            });
+            const data = {
+                name: document.getElementById('student-name').innerText,
+                roll: document.getElementById('roll-no').innerText,
+                grade: document.getElementById('student-grade').innerText,
+                attendance: document.getElementById('attendance').innerText,
+                year: document.getElementById('acad-year').innerText,
+                remarks: document.getElementById('teacher-remarks').innerText,
+                subjects: subs
+            };
+            localStorage.setItem('ssdbs_v5_cgpa', JSON.stringify(data));
+            alert("Success: Student record saved!");
+        }
+
+        function exportToCSV() {
+            const name = document.getElementById('student-name').innerText;
+            const roll = document.getElementById('roll-no').innerText;
+            let csv = `INSTITUTION,SHREE SETI DEVI BASIC SCHOOL\nSTUDENT,${name}\nROLL,${roll}\nCGPA,${document.getElementById('final-cgpa').innerText}\n\nSubject,Full Marks,Obtained,Grade\n`;
+            
+            document.querySelectorAll('#marks-body tr').forEach(row => {
+                csv += `"${row.querySelector('.sub-name').innerText}",${row.querySelector('.full-mark').innerText},${row.querySelector('.mark-input').innerText},${row.querySelector('.grade-output').innerText}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Result_Roll_${roll}.csv`);
+            a.click();
+        }
+    </script>
+</body>
+</html>

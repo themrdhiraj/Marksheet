@@ -45,7 +45,6 @@
         table { border-collapse: collapse; width: 100%; table-layout: fixed; }
         td, th { border: 1.5px solid #000; padding: 5px; font-size: 11px; overflow: hidden; }
 
-        /* Custom Switch for Language */
         .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 24px; }
@@ -88,8 +87,7 @@
                 </div>
             </div>
 
-            <div class="p-8 space-y-8" id="modal-body">
-                </div>
+            <div class="p-8 space-y-8" id="modal-body"></div>
 
             <div class="p-8 bg-slate-50 border-t rounded-b-[30px] flex items-center justify-between">
                 <p class="text-[10px] text-slate-400 font-bold italic" id="m-footer">Shree Seti Devi Basic School © 2026</p>
@@ -299,7 +297,6 @@
             document.getElementById('modal-body').innerHTML = bodyHtml;
         }
 
-        // --- ENGINE LOGIC ---
         function toggleSidebar() { 
             document.getElementById('sidebar').classList.toggle('sidebar-collapsed'); 
             document.getElementById('main-content').classList.toggle('main-expanded'); 
@@ -311,12 +308,19 @@
 
         function addNew() {
             const id = 'ID_' + Date.now();
-            students[id] = { name: "STUDENT NAME", roll: "0", grade: "5", att: "180/200", date: "2082-12-25", rem: "Great effort.", subjects: [
+            let subList = [
                 {n:"Nepali", f:100, p:35, o:0}, {n:"English", f:100, p:35, o:0}, 
                 {n:"Mathematics", f:100, p:35, o:0}, {n:"Science", f:100, p:35, o:0}, 
                 {n:"Social Studies", f:100, p:35, o:0}, {n:"Health & Phys", f:50, p:18, o:0},
                 {n:"Creative Arts", f:50, p:18, o:0}, {n:"Local Subject", f:100, p:35, o:0}
-            ], total: 0, tf: 0, pass: true };
+            ];
+
+            // If a current student exists, copy their subject names and limits
+            if(currentId && students[currentId]) {
+                subList = students[currentId].subjects.map(s => ({ ...s, o: 0 }));
+            }
+
+            students[id] = { name: "STUDENT NAME", roll: "0", grade: "5", att: "180/200", date: "2082-12-25", rem: "Great effort.", subjects: subList, total: 0, tf: 0, pass: true };
             currentId = id; saveToStorage(); load(id); renderList();
         }
 
@@ -349,20 +353,12 @@
             });
             const fpct = tf > 0 ? (to/tf*100) : 0;
             const fgpa = tf > 0 ? (to/tf*4) : 0;
-
-            // Final Letter Grade Calculation
             let finalGrade = fail ? 'E' : (fpct >= 90 ? 'A+' : fpct >= 80 ? 'A' : fpct >= 70 ? 'B+' : fpct >= 60 ? 'B' : fpct >= 50 ? 'C+' : fpct >= 40 ? 'C' : 'D');
-
             document.getElementById('final-pct').innerText = fpct.toFixed(1) + "%";
             document.getElementById('final-gpa').innerText = fgpa.toFixed(2);
-            
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = fail ? "FAIL" : "PASS";
-            statusEl.className = `text-lg font-black uppercase ${fail ? 'text-red-700' : 'text-green-700'}`;
-            
-            // Set the final grade next to result
+            document.getElementById('status').innerText = fail ? "FAIL" : "PASS";
+            document.getElementById('status').className = `text-lg font-black uppercase ${fail ? 'text-red-700' : 'text-green-700'}`;
             document.getElementById('status-grade').innerText = finalGrade;
-
             if(currentId) { students[currentId].total = to; students[currentId].pass = !fail; updateRank(); }
         }
 
@@ -399,7 +395,7 @@
         function refreshRemarks() { 
             if(currentId) { 
                 const first = students[currentId].name.split(' ')[0];
-                const remarks = [`${first} shows exceptional growth!`, `${first} is hardworking and dedicated.`, `${first} needs a little more focus in math.`];
+                const remarks = [`${first} shows exceptional growth!`, `${first} is hardworking and dedicated.`, `${first} needs a little focus in math.`];
                 students[currentId].rem = remarks[Math.floor(Math.random() * remarks.length)];
                 document.getElementById('d-rem').innerText = students[currentId].rem; 
                 saveToStorage(); 
